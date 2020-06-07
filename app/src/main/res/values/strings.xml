@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">ShutUp2.0</string>
+
+    <string name="sign_out">Sign Out</string>
+    <string name="send_button_label">Send</string>
+    <string name="image_send_button_description">Button to send image</string>
+    <string name="send_image">Send Image</string>
+
+    <string name="auto_fill_hints">Enter Your Message</string>
+    <string name="image_desc">Uploaded Image</string>
+
+<!-- required for facebook login-->
+    <string name="facebook_application_id" translatable="false">332038851118475</string>
+    <string name="fb_login_protocol_scheme" translatable="false">fb332038851118475</string>
+
+</resources>
