@@ -169,7 +169,9 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == PHOTO_PICKER) {
             if (resultCode == RESULT_OK) {
                 uploadImage(data);
-            } else if (requestCode == SIGN_IN && resultCode == RESULT_OK) {
+            }
+        } else if (requestCode == SIGN_IN) {
+            if (resultCode == RESULT_OK) {
                 Toast.makeText(MainActivity.this, "Sign In successful", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(MainActivity.this, "Sign-In Cancelled", Toast.LENGTH_SHORT).show();
