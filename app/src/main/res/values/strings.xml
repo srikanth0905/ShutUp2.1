@@ -8,6 +8,7 @@
 
     <string name="auto_fill_hints">Enter Your Message</string>
     <string name="image_desc">Uploaded Image</string>
+    <string name="main_activity">Main Activity</string>
 
 <!-- required for facebook login-->
     <string name="facebook_application_id" translatable="false">332038851118475</string>

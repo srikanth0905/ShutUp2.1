@@ -28,7 +28,7 @@
         android:layout_alignParentBottom="true"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="6dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -37,7 +37,7 @@
         <ImageButton
             android:id="@+id/photoPickerButton"
             android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_height="32dp"
             android:layout_gravity="center_vertical"
             android:background="@drawable/camera_button"
             android:contentDescription="@string/image_send_button_description" />
@@ -51,11 +51,11 @@
             android:layout_marginEnd="4dp"
             android:layout_weight="1"
             android:background="@drawable/message_edit_text"
+            android:hint="@string/auto_fill_hints"
             android:importantForAutofill="no"
             android:inputType="text"
-            android:textColor="@color/EditTextMessage"
             android:padding="16dp"
-            android:hint="@string/auto_fill_hints"
+            android:textColor="@color/EditTextMessage"
             android:textColorHint="@color/EditTextHint" />
 
         <Button

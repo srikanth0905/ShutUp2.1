@@ -5,10 +5,14 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -63,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PHOTO_PICKER = 576;
 
-    private Uri imageUri;
+    ProgressDialog progressDialog;
 
 
     @Override
@@ -83,6 +87,8 @@ public class MainActivity extends AppCompatActivity {
         photoPickerButton = findViewById(R.id.photoPickerButton);
         mMessageEditText = findViewById(R.id.messageEditText);
         mSendButton = findViewById(R.id.sendButton);
+
+        progressDialog = new ProgressDialog(this);
 
         //Initialize message list and its adapter
         List<ShutUpMessages> shutUpMessages = new ArrayList<>();
@@ -124,7 +130,25 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //TODO: Enable send button when there is text to send
+        //Enable send button when there is text to send
+        mMessageEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.toString().trim().length() > 0)
+                    mSendButton.setEnabled(true);
+                else
+                    mSendButton.setEnabled(false);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
 
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -159,7 +183,6 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         mMessageDatabaseReference.addChildEventListener(mChildEventListener);
-
     }
 
     @Override
@@ -168,6 +191,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == PHOTO_PICKER) {
             if (resultCode == RESULT_OK) {
+                progressDialog.setMessage("Uploading...");
+                assert data != null;
                 uploadImage(data);
             }
         } else if (requestCode == SIGN_IN) {
@@ -181,38 +206,39 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void uploadImage(Intent data) {
+        Uri imageUri = data.getData();
         if (imageUri != null) {
-            imageUri = data.getData();
-            mChatPhotosReference
-                    .child(mUserName + (new Timestamp(System.currentTimeMillis()).toString()))
-                    .putFile(imageUri)
-                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            progressDialog.show();
+            final StorageReference photosReference = mChatPhotosReference.child(mUserName + (new Timestamp(System.currentTimeMillis()).toString()) + imageUri.getLastPathSegment());
+
+            photosReference.putFile(imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                    Toast.makeText(MainActivity.this, "File Uploaded", Toast.LENGTH_SHORT).show();
+                    photosReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                         @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            Toast.makeText(MainActivity.this, "File Uploaded", Toast.LENGTH_SHORT).show();
-                            mChatPhotosReference
-                                    .getDownloadUrl()
-                                    .addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                        @Override
-                                        public void onSuccess(Uri uri) {
-                                            ShutUpMessages message = new ShutUpMessages(null, mUserName, uri.toString());
-                                            mMessageDatabaseReference.setValue(message);
-                                            mMessageDatabaseReference.push();
-                                        }
-                                    }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Toast.makeText(MainActivity.this, "Not able to get file URL", Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                        public void onSuccess(Uri uri) {
+                            progressDialog.dismiss();
+                            Log.i("Uploaded file URL: ", uri.toString());
+//                            Toast.makeText(MainActivity.this, "File uploaded to: " + uri, Toast.LENGTH_LONG).show();
+                            ShutUpMessages message = new ShutUpMessages(null, mUserName, uri.toString());
+                            mMessageDatabaseReference.push().setValue(message);
                         }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
+                    }).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            progressDialog.dismiss();
+                            Toast.makeText(MainActivity.this, "File not uploaded: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    progressDialog.dismiss();
+                    Toast.makeText(MainActivity.this, "File upload failed:" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 
