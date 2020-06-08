@@ -9,7 +9,6 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -20,7 +19,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -68,6 +66,9 @@ public class MainActivity extends AppCompatActivity {
     private static final int PHOTO_PICKER = 576;
 
     ProgressDialog progressDialog;
+    ArrayList<ShutUpMessages> messages;
+    RecyclerView recyclerView;
+    RecyclerView.LayoutManager layoutManager;
 
 
     @Override
@@ -83,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
         mMessageDatabaseReference = mFirebaseDatabase.getReference().child(MESSAGE_ROOT_REFERENCE);
         mChatPhotosReference = mFirebaseStorage.getReference().child(CHAT_ROOT_REFERENCE);
 
-        ListView mMessageListView = findViewById(R.id.messageListView);
+        RecyclerView mMessageListView = findViewById(R.id.messageListView);
         photoPickerButton = findViewById(R.id.photoPickerButton);
         mMessageEditText = findViewById(R.id.messageEditText);
         mSendButton = findViewById(R.id.sendButton);
@@ -183,6 +184,12 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         mMessageDatabaseReference.addChildEventListener(mChildEventListener);
+    }
+
+    private void MessageData() {
+        messages = new ArrayList<>();
+
+        messages.add(new ShutUpMessages())
     }
 
     @Override
