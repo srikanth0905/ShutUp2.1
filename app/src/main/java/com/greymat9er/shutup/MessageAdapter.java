@@ -1,12 +1,15 @@
 package com.greymat9er.shutup;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -14,10 +17,11 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 
 import java.util.List;
+import java.util.Objects;
 
 public class MessageAdapter extends FirebaseRecyclerAdapter<ShutUpMessages, MessageAdapter.MessageViewHolder> {
 
-//    private List<ShutUpMessages> message;
+    Context context;
 
     /**
      * Initialize a {@link RecyclerView.Adapter} that listens to a Firebase query. See
@@ -25,8 +29,9 @@ public class MessageAdapter extends FirebaseRecyclerAdapter<ShutUpMessages, Mess
      *
      * @param options
      */
-    public MessageAdapter(@NonNull FirebaseRecyclerOptions<ShutUpMessages> options) {
+    public MessageAdapter(Context context, @NonNull FirebaseRecyclerOptions<ShutUpMessages> options) {
         super(options);
+        this.context = context;
     }
 
     @NonNull
@@ -38,8 +43,11 @@ public class MessageAdapter extends FirebaseRecyclerAdapter<ShutUpMessages, Mess
 
     @Override
     protected void onBindViewHolder(@NonNull MessageViewHolder holder, int position, @NonNull ShutUpMessages model) {
-        boolean isPhoto = model.getPhotoUri() != null;
 
+        //adding animation to item
+        holder.container.setAnimation(AnimationUtils.loadAnimation(context, R.anim.slide_from_botton));
+
+        boolean isPhoto = model.getPhotoUri() != null;
         if (isPhoto) {
             holder.messageTextView.setVisibility(View.GONE);
             holder.photoImageView.setVisibility(View.VISIBLE);
@@ -60,11 +68,15 @@ public class MessageAdapter extends FirebaseRecyclerAdapter<ShutUpMessages, Mess
         public ImageView photoImageView;
         public TextView messageTextView;
         public TextView authorTextView;
+        public CardView container;
+        public RecyclerView recyclerView;
 
 
         public MessageViewHolder(@NonNull View itemView) {
             super(itemView);
 
+            container = itemView.findViewById(R.id.container);
+            recyclerView = itemView.findViewById(R.id.messageRecyclerView);
             photoImageView = itemView.findViewById(R.id.photoImageView);
             messageTextView = itemView.findViewById(R.id.messageTextView);
             authorTextView = itemView.findViewById(R.id.authorTextView);

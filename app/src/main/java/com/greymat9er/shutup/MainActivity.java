@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
                 .setQuery(mMessageDatabaseReference, ShutUpMessages.class)
                 .build();
 
-        adapter = new MessageAdapter(options);
+        adapter = new MessageAdapter(this, options);
 
         recyclerView = findViewById(R.id.messageRecyclerView);
         recyclerView.setHasFixedSize(true);
