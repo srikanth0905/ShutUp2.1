@@ -34,6 +34,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -42,6 +43,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth.AuthStateListener mAuthStateListener;
 
     private FirebaseRecyclerOptions<ShutUpMessages> options;
-    private FirebaseRecyclerAdapter<ShutUpMessages, MessageAdapter.MessageViewHolder> adapter;
+//    private FirebaseRecyclerAdapter<ShutUpMessages, MessageAdapter.MessageViewHolder> adapter;
 
 
     public final static String MESSAGE_ROOT_REFERENCE = "messages";
@@ -70,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
     RecyclerView recyclerView;
     ArrayList<ShutUpMessages> mShutUpMessages;
+    private MessageAdapter adapter;
 
     ProgressDialog progressDialog;
 
@@ -77,12 +80,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //initializing recycler view
-        recyclerView = findViewById(R.id.messageRecyclerView);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mShutUpMessages = new ArrayList<ShutUpMessages>();
 
 
         //initializing database and storage reference
@@ -93,48 +90,14 @@ public class MainActivity extends AppCompatActivity {
         mMessageDatabaseReference = mFirebaseDatabase.getReference().child(MESSAGE_ROOT_REFERENCE);
         mChatPhotosReference = mFirebaseStorage.getReference().child(CHAT_ROOT_REFERENCE);
 
+        //initializing recycler view
+        setUpRecyclerView();
+
         photoPickerButton = findViewById(R.id.photoPickerButton);
         mMessageEditText = findViewById(R.id.messageEditText);
         mSendButton = findViewById(R.id.sendButton);
 
         progressDialog = new ProgressDialog(this);
-
-        options = new FirebaseRecyclerOptions.Builder<ShutUpMessages>()
-                .setQuery(mMessageDatabaseReference, ShutUpMessages.class)
-                .build();
-        //initializing FirebaseRecyclerAdapter
-
-//        adapter = new FirebaseRecyclerAdapter<ShutUpMessages, MessageAdapter.MessageViewHolder>(options) {
-//            @Override
-//            protected void onBindViewHolder(@NonNull MessageAdapter.MessageViewHolder holder, int position, @NonNull ShutUpMessages model) {
-//                boolean isPhoto = model.getPhotoUri() != null;
-//
-//                if (isPhoto) {
-//                    holder.messageTextView.setVisibility(View.GONE);
-//                    holder.photoImageView.setVisibility(View.VISIBLE);
-//
-//                    Glide.with(holder.photoImageView.getContext())
-//                            .load(model.getPhotoUri())
-//                            .into(holder.photoImageView);
-//                } else {
-//                    holder.messageTextView.setVisibility(View.VISIBLE);
-//                    holder.photoImageView.setVisibility(View.GONE);
-//
-//                    holder.messageTextView.setText(model.getText());
-//                }
-//                holder.authorTextView.setText(model.getName());
-//            }
-//
-//            @NonNull
-//            @Override
-//            public MessageAdapter.MessageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-//                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message, parent, false);
-//                return new MessageAdapter.MessageViewHolder(view);
-//            }
-//        };
-//        adapter.startListening();
-        recyclerView.setAdapter(adapter);
-
 
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -160,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        //Open photo selector when camera button is clicked
         photoPickerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -190,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //send message to Database
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -223,6 +188,19 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        };
 //        mMessageDatabaseReference.addChildEventListener(mChildEventListener);
+    }
+
+    private void setUpRecyclerView() {
+        options = new FirebaseRecyclerOptions.Builder<ShutUpMessages>()
+                .setQuery(mMessageDatabaseReference, ShutUpMessages.class)
+                .build();
+
+        adapter = new MessageAdapter(options);
+
+        recyclerView = findViewById(R.id.messageRecyclerView);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter);
     }
 
     @Override
@@ -280,6 +258,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        adapter.startListening();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        adapter.startListening();
     }
 
     @Override
