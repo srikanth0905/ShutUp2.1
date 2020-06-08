@@ -39,6 +39,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PHOTO_PICKER = 576;
 
     RecyclerView recyclerView;
+    ArrayList<ShutUpMessages> mShutUpMessages;
 
     ProgressDialog progressDialog;
 
@@ -80,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.messageRecyclerView);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mShutUpMessages = new ArrayList<ShutUpMessages>();
 
 
         //initializing database and storage reference
@@ -100,35 +103,36 @@ public class MainActivity extends AppCompatActivity {
                 .setQuery(mMessageDatabaseReference, ShutUpMessages.class)
                 .build();
         //initializing FirebaseRecyclerAdapter
-        adapter = new FirebaseRecyclerAdapter<ShutUpMessages, MessageAdapter.MessageViewHolder>(options) {
-            @Override
-            protected void onBindViewHolder(@NonNull MessageAdapter.MessageViewHolder holder, int position, @NonNull ShutUpMessages model) {
-                boolean isPhoto = model.getPhotoUri() != null;
 
-                if (isPhoto) {
-                    holder.messageTextView.setVisibility(View.GONE);
-                    holder.photoImageView.setVisibility(View.VISIBLE);
-
-                    Glide.with(holder.photoImageView.getContext())
-                            .load(model.getPhotoUri())
-                            .into(holder.photoImageView);
-                } else {
-                    holder.messageTextView.setVisibility(View.VISIBLE);
-                    holder.photoImageView.setVisibility(View.GONE);
-
-                    holder.messageTextView.setText(model.getText());
-                }
-                holder.authorTextView.setText(model.getName());
-            }
-
-            @NonNull
-            @Override
-            public MessageAdapter.MessageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message, parent, false);
-                return new MessageAdapter.MessageViewHolder(view);
-            }
-        };
-        adapter.startListening();
+//        adapter = new FirebaseRecyclerAdapter<ShutUpMessages, MessageAdapter.MessageViewHolder>(options) {
+//            @Override
+//            protected void onBindViewHolder(@NonNull MessageAdapter.MessageViewHolder holder, int position, @NonNull ShutUpMessages model) {
+//                boolean isPhoto = model.getPhotoUri() != null;
+//
+//                if (isPhoto) {
+//                    holder.messageTextView.setVisibility(View.GONE);
+//                    holder.photoImageView.setVisibility(View.VISIBLE);
+//
+//                    Glide.with(holder.photoImageView.getContext())
+//                            .load(model.getPhotoUri())
+//                            .into(holder.photoImageView);
+//                } else {
+//                    holder.messageTextView.setVisibility(View.VISIBLE);
+//                    holder.photoImageView.setVisibility(View.GONE);
+//
+//                    holder.messageTextView.setText(model.getText());
+//                }
+//                holder.authorTextView.setText(model.getName());
+//            }
+//
+//            @NonNull
+//            @Override
+//            public MessageAdapter.MessageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+//                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message, parent, false);
+//                return new MessageAdapter.MessageViewHolder(view);
+//            }
+//        };
+//        adapter.startListening();
         recyclerView.setAdapter(adapter);
 
 

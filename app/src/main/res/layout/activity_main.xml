@@ -15,6 +15,7 @@
         android:paddingEnd="4dp"
         android:paddingBottom="4dp"
         tools:listitem="@layout/item_message"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
