@@ -3,6 +3,7 @@ package com.greymat9er.shutup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.ProgressDialog;
@@ -12,24 +13,25 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
@@ -37,7 +39,6 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
     private String mUserName;
     private Button mSendButton;
     private EditText mMessageEditText;
-    private MessageAdapter mMessageAdapter;
     private ImageButton photoPickerButton;
 
     private FirebaseDatabase mFirebaseDatabase;
@@ -57,7 +57,9 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth mFirebaseAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
 
-    private ChildEventListener mChildEventListener;
+    private FirebaseRecyclerOptions<ShutUpMessages> options;
+    private FirebaseRecyclerAdapter<ShutUpMessages, MessageAdapter.MessageViewHolder> adapter;
+
 
     public final static String MESSAGE_ROOT_REFERENCE = "messages";
     public final static String CHAT_ROOT_REFERENCE = "photos/";
@@ -65,16 +67,20 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PHOTO_PICKER = 576;
 
-    ProgressDialog progressDialog;
-    ArrayList<ShutUpMessages> messages;
     RecyclerView recyclerView;
-    RecyclerView.LayoutManager layoutManager;
 
+    ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //initializing recycler view
+        recyclerView = findViewById(R.id.messageRecyclerView);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
 
         //initializing database and storage reference
         mFirebaseDatabase = FirebaseDatabase.getInstance();
@@ -84,17 +90,47 @@ public class MainActivity extends AppCompatActivity {
         mMessageDatabaseReference = mFirebaseDatabase.getReference().child(MESSAGE_ROOT_REFERENCE);
         mChatPhotosReference = mFirebaseStorage.getReference().child(CHAT_ROOT_REFERENCE);
 
-        RecyclerView mMessageListView = findViewById(R.id.messageListView);
         photoPickerButton = findViewById(R.id.photoPickerButton);
         mMessageEditText = findViewById(R.id.messageEditText);
         mSendButton = findViewById(R.id.sendButton);
 
         progressDialog = new ProgressDialog(this);
 
-        //Initialize message list and its adapter
-        List<ShutUpMessages> shutUpMessages = new ArrayList<>();
-        mMessageAdapter = new MessageAdapter(this, R.layout.item_message, shutUpMessages);
-        mMessageListView.setAdapter(mMessageAdapter);
+        options = new FirebaseRecyclerOptions.Builder<ShutUpMessages>()
+                .setQuery(mMessageDatabaseReference, ShutUpMessages.class)
+                .build();
+        //initializing FirebaseRecyclerAdapter
+        adapter = new FirebaseRecyclerAdapter<ShutUpMessages, MessageAdapter.MessageViewHolder>(options) {
+            @Override
+            protected void onBindViewHolder(@NonNull MessageAdapter.MessageViewHolder holder, int position, @NonNull ShutUpMessages model) {
+                boolean isPhoto = model.getPhotoUri() != null;
+
+                if (isPhoto) {
+                    holder.messageTextView.setVisibility(View.GONE);
+                    holder.photoImageView.setVisibility(View.VISIBLE);
+
+                    Glide.with(holder.photoImageView.getContext())
+                            .load(model.getPhotoUri())
+                            .into(holder.photoImageView);
+                } else {
+                    holder.messageTextView.setVisibility(View.VISIBLE);
+                    holder.photoImageView.setVisibility(View.GONE);
+
+                    holder.messageTextView.setText(model.getText());
+                }
+                holder.authorTextView.setText(model.getName());
+            }
+
+            @NonNull
+            @Override
+            public MessageAdapter.MessageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message, parent, false);
+                return new MessageAdapter.MessageViewHolder(view);
+            }
+        };
+        adapter.startListening();
+        recyclerView.setAdapter(adapter);
+
 
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -119,7 +155,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-
 
         photoPickerButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -160,36 +195,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mChildEventListener = new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                ShutUpMessages messages = dataSnapshot.getValue(ShutUpMessages.class);
-                mMessageAdapter.add(messages);
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        };
-        mMessageDatabaseReference.addChildEventListener(mChildEventListener);
-    }
-
-    private void MessageData() {
-        messages = new ArrayList<>();
-
-        messages.add(new ShutUpMessages())
+//        mChildEventListener = new ChildEventListener() {
+//            @Override
+//            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+//                ShutUpMessages messages = dataSnapshot.getValue(ShutUpMessages.class);
+//                mMessageAdapter.add(messages);
+//            }
+//
+//            @Override
+//            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+//            }
+//
+//            @Override
+//            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+//            }
+//
+//            @Override
+//            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//            }
+//        };
+//        mMessageDatabaseReference.addChildEventListener(mChildEventListener);
     }
 
     @Override
