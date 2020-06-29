@@ -13,20 +13,17 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
 import com.firebase.ui.auth.AuthUI;
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.common.ChangeEventType;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -34,7 +31,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -43,10 +39,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Queue;
 
 public class MainActivity extends AppCompatActivity {
-
 
     private String mUserName;
     private Button mSendButton;
@@ -61,8 +55,6 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth.AuthStateListener mAuthStateListener;
 
     private FirebaseRecyclerOptions<ShutUpMessages> options;
-//    private FirebaseRecyclerAdapter<ShutUpMessages, MessageAdapter.MessageViewHolder> adapter;
-
 
     public final static String MESSAGE_ROOT_REFERENCE = "messages";
     public final static String CHAT_ROOT_REFERENCE = "photos/";
@@ -70,8 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PHOTO_PICKER = 576;
 
-    RecyclerView recyclerView;
-    ArrayList<ShutUpMessages> mShutUpMessages;
+    private RecyclerView recyclerView;
     private MessageAdapter adapter;
 
     ProgressDialog progressDialog;
@@ -93,35 +84,14 @@ public class MainActivity extends AppCompatActivity {
         //initializing recycler view
         setUpRecyclerView();
 
+        //setting Up authentication
+        signInHandler();
+
         photoPickerButton = findViewById(R.id.photoPickerButton);
         mMessageEditText = findViewById(R.id.messageEditText);
         mSendButton = findViewById(R.id.sendButton);
 
         progressDialog = new ProgressDialog(this);
-
-        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-                if (firebaseUser != null) {
-                    mUserName = firebaseUser.getDisplayName();
-                } else {
-                    List<AuthUI.IdpConfig> providers = Arrays.asList(
-                            new AuthUI.IdpConfig.EmailBuilder().build(),
-                            new AuthUI.IdpConfig.GoogleBuilder().build(),
-                            new AuthUI.IdpConfig.FacebookBuilder().build());
-
-                    //creating and launching sign-in events
-                    startActivityForResult(
-                            AuthUI.getInstance()
-                                    .createSignInIntentBuilder()
-                                    .setIsSmartLockEnabled(false)
-                                    .setAvailableProviders(providers)
-                                    .build()
-                            , SIGN_IN);
-                }
-            }
-        };
 
         //Open photo selector when camera button is clicked
         photoPickerButton.setOnClickListener(new View.OnClickListener() {
@@ -161,33 +131,42 @@ public class MainActivity extends AppCompatActivity {
                 ShutUpMessages message = new ShutUpMessages(mMessageEditText.getText().toString().trim(), mUserName, null);
                 mMessageDatabaseReference.push().setValue(message);
                 mMessageEditText.setText("");
+
+                //scrolling up to the latest message
+                recyclerView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        recyclerView.smoothScrollToPosition(adapter.getItemCount() - 1);
+                    }
+                });
             }
         });
+    }
 
-//        mChildEventListener = new ChildEventListener() {
-//            @Override
-//            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-//                ShutUpMessages messages = dataSnapshot.getValue(ShutUpMessages.class);
-//                mMessageAdapter.add(messages);
-//            }
-//
-//            @Override
-//            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-//            }
-//
-//            @Override
-//            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-//            }
-//
-//            @Override
-//            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//            }
-//        };
-//        mMessageDatabaseReference.addChildEventListener(mChildEventListener);
+    private void signInHandler() {
+        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+                if (firebaseUser != null) {
+                    mUserName = firebaseUser.getDisplayName();
+                } else {
+                    List<AuthUI.IdpConfig> providers = Arrays.asList(
+                            new AuthUI.IdpConfig.EmailBuilder().build(),
+                            new AuthUI.IdpConfig.GoogleBuilder().build(),
+                            new AuthUI.IdpConfig.FacebookBuilder().build());
+
+                    //creating and launching sign-in events
+                    startActivityForResult(
+                            AuthUI.getInstance()
+                                    .createSignInIntentBuilder()
+                                    .setIsSmartLockEnabled(false)
+                                    .setAvailableProviders(providers)
+                                    .build()
+                            , SIGN_IN);
+                }
+            }
+        };
     }
 
     private void setUpRecyclerView() {
@@ -196,11 +175,13 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         adapter = new MessageAdapter(this, options);
+        adapter.notifyDataSetChanged();
 
         recyclerView = findViewById(R.id.messageRecyclerView);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
+
     }
 
     @Override

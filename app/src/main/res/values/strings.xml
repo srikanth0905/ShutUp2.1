@@ -9,9 +9,18 @@
     <string name="auto_fill_hints">Enter Your Message</string>
     <string name="image_desc">Uploaded Image</string>
     <string name="main_activity">Main Activity</string>
+    <string name="profile_picture">Profile Picture</string>
 
-<!-- required for facebook login-->
+    <!-- required for facebook login-->
     <string name="facebook_application_id" translatable="false">332038851118475</string>
     <string name="fb_login_protocol_scheme" translatable="false">fb332038851118475</string>
+    <string name="title_activity_user_list">UserList</string>
+    <string name="tab_text_1">Chat</string>
+    <string name="tab_text_2">Friends</string>
+    <string name="tab_text_3">Connect</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="friend_s_name">Friend\'s Name</string>
+    <string name="profile_picture_of_user">Profile picture of user</string>
 
 </resources>

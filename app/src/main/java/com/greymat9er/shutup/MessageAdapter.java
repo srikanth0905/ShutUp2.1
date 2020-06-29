@@ -16,8 +16,6 @@ import com.bumptech.glide.Glide;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 
-import java.util.List;
-import java.util.Objects;
 
 public class MessageAdapter extends FirebaseRecyclerAdapter<ShutUpMessages, MessageAdapter.MessageViewHolder> {
 
@@ -45,7 +43,7 @@ public class MessageAdapter extends FirebaseRecyclerAdapter<ShutUpMessages, Mess
     protected void onBindViewHolder(@NonNull MessageViewHolder holder, int position, @NonNull ShutUpMessages model) {
 
         //adding animation to item
-        holder.container.setAnimation(AnimationUtils.loadAnimation(context, R.anim.slide_from_botton));
+//        holder.container.setAnimation(AnimationUtils.loadAnimation(context, R.anim.slide_from_botton));
 
         boolean isPhoto = model.getPhotoUri() != null;
         if (isPhoto) {
