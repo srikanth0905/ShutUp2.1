@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
+import com.google.firebase.auth.FirebaseUser;
 import com.greymat9er.shutup.ChatFragment;
 import com.greymat9er.shutup.FriendsFragment;
 import com.greymat9er.shutup.R;
@@ -22,10 +23,12 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     @StringRes
     private static final int[] TAB_TITLES = new int[]{R.string.tab_text_1, R.string.tab_text_2, R.string.tab_text_3};
     private final Context mContext;
+    private FirebaseUser firebaseUser;
 
-    public SectionsPagerAdapter(Context context, FragmentManager fm) {
+    public SectionsPagerAdapter(Context context, FragmentManager fm, FirebaseUser firebaseUser) {
         super(fm);
         mContext = context;
+        this.firebaseUser = firebaseUser;
     }
 
     @Override
@@ -35,7 +38,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
         Fragment fragment = new Fragment();
         switch (position) {
             case 0:
-                return new ChatFragment();
+                return new ChatFragment(firebaseUser);
             case 1:
                 return new FriendsFragment();
             default:

@@ -10,6 +10,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.auth.FirebaseUser;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,9 +20,14 @@ public class ChatFragment extends Fragment {
     private List<ChatList> fakeData;
     private RecyclerView recyclerView;
     private View view;
+    private FirebaseUser firebaseUser;
 
     public ChatFragment() {
         // Required empty public constructor
+    }
+
+    public ChatFragment(FirebaseUser firebaseUser) {
+        this.firebaseUser = firebaseUser;
     }
 
     @Override
@@ -52,7 +59,7 @@ public class ChatFragment extends Fragment {
     private void generateFakeData() {
         fakeData = new ArrayList<>();
 
-        fakeData.add(new ChatList("World Chat", R.drawable.person));
+        fakeData.add(new ChatList(firebaseUser.getDisplayName(), R.drawable.person));
         fakeData.add(new ChatList("World Chat 2", R.drawable.profile_pic_circle));
         fakeData.add(new ChatList("World Chat 3", R.drawable.person));
         fakeData.add(new ChatList("World Chat 5", R.drawable.profile_pic_circle));

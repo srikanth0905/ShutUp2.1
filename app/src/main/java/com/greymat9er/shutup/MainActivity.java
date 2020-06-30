@@ -51,8 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference mMessageDatabaseReference;
     private FirebaseStorage mFirebaseStorage;
     private StorageReference mChatPhotosReference;
-    private FirebaseAuth mFirebaseAuth;
-    private FirebaseAuth.AuthStateListener mAuthStateListener;
+
 
     private FirebaseRecyclerOptions<ShutUpMessages> options;
 
@@ -65,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private MessageAdapter adapter;
 
-    ProgressDialog progressDialog;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
         //initializing database and storage reference
         mFirebaseDatabase = FirebaseDatabase.getInstance();
         mFirebaseStorage = FirebaseStorage.getInstance();
-        mFirebaseAuth = FirebaseAuth.getInstance();
 
         mMessageDatabaseReference = mFirebaseDatabase.getReference().child(MESSAGE_ROOT_REFERENCE);
         mChatPhotosReference = mFirebaseStorage.getReference().child(CHAT_ROOT_REFERENCE);
@@ -85,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         setUpRecyclerView();
 
         //setting Up authentication
-        signInHandler();
+//        signInHandler();
 
         photoPickerButton = findViewById(R.id.photoPickerButton);
         mMessageEditText = findViewById(R.id.messageEditText);
@@ -141,32 +139,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
-    }
-
-    private void signInHandler() {
-        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-                if (firebaseUser != null) {
-                    mUserName = firebaseUser.getDisplayName();
-                } else {
-                    List<AuthUI.IdpConfig> providers = Arrays.asList(
-                            new AuthUI.IdpConfig.EmailBuilder().build(),
-                            new AuthUI.IdpConfig.GoogleBuilder().build(),
-                            new AuthUI.IdpConfig.FacebookBuilder().build());
-
-                    //creating and launching sign-in events
-                    startActivityForResult(
-                            AuthUI.getInstance()
-                                    .createSignInIntentBuilder()
-                                    .setIsSmartLockEnabled(false)
-                                    .setAvailableProviders(providers)
-                                    .build()
-                            , SIGN_IN);
-                }
-            }
-        };
     }
 
     private void setUpRecyclerView() {
@@ -253,31 +225,4 @@ public class MainActivity extends AppCompatActivity {
         adapter.startListening();
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        mFirebaseAuth.removeAuthStateListener(mAuthStateListener);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mFirebaseAuth.addAuthStateListener(mAuthStateListener);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.sign_out_menu) {
-            AuthUI.getInstance().signOut(this);
-            return true;
-        } else
-            return super.onOptionsItemSelected(item);
-    }
 }
