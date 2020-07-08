@@ -2,6 +2,8 @@ package com.greymat9er.shutup;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +17,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseUser;
+
 import java.util.List;
 
 
@@ -22,10 +26,13 @@ public class ChatRecyclerViewAdapter extends RecyclerView.Adapter<ChatRecyclerVi
 
     Context mContext;
     List<ChatList> mData;
+    String mUserName;
 
-    public ChatRecyclerViewAdapter(Context mContext, List<ChatList> mData) {
+    public ChatRecyclerViewAdapter(Context mContext, List<ChatList> mData, String mUserName) {
         this.mContext = mContext;
         this.mData = mData;
+        this.mUserName = mUserName;
+        Log.i("ChatRecyclerViewAdapter: ", mUserName);
     }
 
     @NonNull
@@ -41,6 +48,9 @@ public class ChatRecyclerViewAdapter extends RecyclerView.Adapter<ChatRecyclerVi
                 Toast.makeText(mContext, "Click on Item " + viewHolder.getAdapterPosition(), Toast.LENGTH_SHORT).show();
 
                 Intent intent = new Intent(mContext, MainActivity.class);
+                Bundle bundle = new Bundle();
+//                bundle.putParcelable("FirebaseUser", firebaseUser);
+                bundle.putString("Username", mUserName);
                 mContext.startActivity(intent);
             }
         });

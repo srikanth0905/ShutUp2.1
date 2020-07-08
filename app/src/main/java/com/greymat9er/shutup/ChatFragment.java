@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,14 +21,15 @@ public class ChatFragment extends Fragment {
     private List<ChatList> fakeData;
     private RecyclerView recyclerView;
     private View view;
-    private FirebaseUser firebaseUser;
+    private String mUserName;
 
     public ChatFragment() {
         // Required empty public constructor
     }
 
-    public ChatFragment(FirebaseUser firebaseUser) {
-        this.firebaseUser = firebaseUser;
+    public ChatFragment(String mUserName) {
+        this.mUserName = mUserName;
+        Log.i("ChatFragment: ", mUserName);
     }
 
     @Override
@@ -50,8 +52,8 @@ public class ChatFragment extends Fragment {
     }
 
     private void recyclerViewConfig() {
-        recyclerView = (RecyclerView) view.findViewById(R.id.chat_list_recycler_view);
-        ChatRecyclerViewAdapter chatRecyclerViewAdapter = new ChatRecyclerViewAdapter(getContext(), fakeData);
+        recyclerView = view.findViewById(R.id.chat_list_recycler_view);
+        ChatRecyclerViewAdapter chatRecyclerViewAdapter = new ChatRecyclerViewAdapter(getContext(), fakeData, mUserName);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(chatRecyclerViewAdapter);
     }
@@ -59,7 +61,7 @@ public class ChatFragment extends Fragment {
     private void generateFakeData() {
         fakeData = new ArrayList<>();
 
-        fakeData.add(new ChatList(firebaseUser.getDisplayName(), R.drawable.person));
+        fakeData.add(new ChatList(mUserName, R.drawable.person));
         fakeData.add(new ChatList("World Chat 2", R.drawable.profile_pic_circle));
         fakeData.add(new ChatList("World Chat 3", R.drawable.person));
         fakeData.add(new ChatList("World Chat 5", R.drawable.profile_pic_circle));

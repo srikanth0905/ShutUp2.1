@@ -13,22 +13,16 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.firebase.ui.auth.AuthUI;
-import com.firebase.ui.common.ChangeEventType;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
@@ -36,13 +30,10 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String mUserName;
+    private String mUserName = "ANONYMOUS";
     private Button mSendButton;
     private EditText mMessageEditText;
     private ImageButton photoPickerButton;
@@ -51,13 +42,13 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference mMessageDatabaseReference;
     private FirebaseStorage mFirebaseStorage;
     private StorageReference mChatPhotosReference;
+//    private FirebaseUser firebaseUser;
 
 
     private FirebaseRecyclerOptions<ShutUpMessages> options;
 
     public final static String MESSAGE_ROOT_REFERENCE = "messages";
     public final static String CHAT_ROOT_REFERENCE = "photos/";
-    public static final int SIGN_IN = 729;
 
     private static final int PHOTO_PICKER = 576;
 
@@ -71,6 +62,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Intent intent = getIntent();
+        mUserName = intent.getStringExtra("Username");
+        if (mUserName == null)
+            mUserName = "Value not found";
+        Log.d("MainActivity: ", mUserName);
 
         //initializing database and storage reference
         mFirebaseDatabase = FirebaseDatabase.getInstance();
@@ -98,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent();
                 intent.setType("image/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PHOTO_PICKER);
+                startActivityForResult(Intent.createChooser(intent, "Select Image"), PHOTO_PICKER);
             }
         });
 
@@ -166,13 +162,6 @@ public class MainActivity extends AppCompatActivity {
                 assert data != null;
                 uploadImage(data);
             }
-        } else if (requestCode == SIGN_IN) {
-            if (resultCode == RESULT_OK) {
-                Toast.makeText(MainActivity.this, "Sign In successful", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(MainActivity.this, "Sign-In Cancelled", Toast.LENGTH_SHORT).show();
-                finish();
-            }
         }
     }
 
@@ -180,7 +169,8 @@ public class MainActivity extends AppCompatActivity {
         Uri imageUri = data.getData();
         if (imageUri != null) {
             progressDialog.show();
-            final StorageReference photosReference = mChatPhotosReference.child(mUserName + (new Timestamp(System.currentTimeMillis()).toString()) + imageUri.getLastPathSegment());
+            final StorageReference photosReference =
+                    mChatPhotosReference.child(mUserName + (new Timestamp(System.currentTimeMillis()).toString()) + imageUri.getLastPathSegment());
 
             photosReference.putFile(imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
@@ -194,6 +184,19 @@ public class MainActivity extends AppCompatActivity {
 //                            Toast.makeText(MainActivity.this, "File uploaded to: " + uri, Toast.LENGTH_LONG).show();
                             ShutUpMessages message = new ShutUpMessages(null, mUserName, uri.toString());
                             mMessageDatabaseReference.push().setValue(message);
+
+                            //scrolling up to the latest message
+                            recyclerView.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    recyclerView.smoothScrollToPosition(adapter.getItemCount() - 1);
+                                }
+                            });
+
+                            Snackbar snackbar = Snackbar
+                                    .make(findViewById(R.id.main_activity_layout), "Image Uploaded successfully", Snackbar.LENGTH_SHORT);
+                            snackbar.show();
+
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override

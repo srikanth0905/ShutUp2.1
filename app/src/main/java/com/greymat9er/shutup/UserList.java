@@ -2,6 +2,7 @@ package com.greymat9er.shutup;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -32,18 +33,23 @@ public class UserList extends AppCompatActivity {
 
     public static final int SIGN_IN = 729;
 
+    private String mUserName = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_list);
 
-        //authentication handler
         mFirebaseAuth = FirebaseAuth.getInstance();
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null) {
+            firebaseUISignInActivity();
+        }
+        mUserName = firebaseUser.getDisplayName();
+        //authentication handler
         signInHandler();
 
-        //TODO: pass user auth details in 'sectionsPagerAdapter'
-        SectionsPagerAdapter sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager(), firebaseUser);
+        SectionsPagerAdapter sectionsPagerAdapter = new SectionsPagerAdapter(this, getSupportFragmentManager(), mUserName);
         ViewPager viewPager = findViewById(R.id.view_pager);
         viewPager.setAdapter(sectionsPagerAdapter);
         TabLayout tabs = findViewById(R.id.tabs);
@@ -54,8 +60,12 @@ public class UserList extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar
+                        .make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+
+                //TODO: FAB is acting as Sign-out, needs to be changed
+                AuthUI.getInstance().signOut(UserList.this);
             }
         });
     }
@@ -65,26 +75,28 @@ public class UserList extends AppCompatActivity {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 firebaseUser = firebaseAuth.getCurrentUser();
-//                if (firebaseUser != null) {
-//                    mUserName = firebaseUser.getDisplayName();
-//                }
-                if (firebaseUser == null) {
-                    List<AuthUI.IdpConfig> providers = Arrays.asList(
-                            new AuthUI.IdpConfig.EmailBuilder().build(),
-                            new AuthUI.IdpConfig.GoogleBuilder().build(),
-                            new AuthUI.IdpConfig.FacebookBuilder().build());
-
-                    //creating and launching sign-in events
-                    startActivityForResult(
-                            AuthUI.getInstance()
-                                    .createSignInIntentBuilder()
-                                    .setIsSmartLockEnabled(false)
-                                    .setAvailableProviders(providers)
-                                    .build()
-                            , SIGN_IN);
-                }
+                if (firebaseUser != null) {
+                    Log.d("Inside signInHandler: ", mUserName);
+                } else
+                    firebaseUISignInActivity();
             }
         };
+    }
+
+    private void firebaseUISignInActivity() {
+        List<AuthUI.IdpConfig> providers = Arrays.asList(
+                new AuthUI.IdpConfig.EmailBuilder().build(),
+                new AuthUI.IdpConfig.GoogleBuilder().build(),
+                new AuthUI.IdpConfig.FacebookBuilder().build());
+
+        //creating and launching sign-in events
+        startActivityForResult(
+                AuthUI.getInstance()
+                        .createSignInIntentBuilder()
+                        .setIsSmartLockEnabled(false)
+                        .setAvailableProviders(providers)
+                        .build()
+                , SIGN_IN);
     }
 
     @Override
@@ -94,6 +106,13 @@ public class UserList extends AppCompatActivity {
         if (requestCode == SIGN_IN) {
             if (resultCode == RESULT_OK) {
                 Toast.makeText(UserList.this, "Sign In successful", Toast.LENGTH_SHORT).show();
+                firebaseUser = mFirebaseAuth.getCurrentUser();
+                if (firebaseUser != null) {
+                    mUserName = firebaseUser.getDisplayName();
+//                    Log.d("onActivityResult: ", mUserName);
+                } else {
+                    signInHandler();
+                }
             } else {
                 Toast.makeText(UserList.this, "Sign-In Cancelled", Toast.LENGTH_SHORT).show();
                 finish();

@@ -1,6 +1,7 @@
 package com.greymat9er.shutup.ui.main;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,22 +24,23 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
     @StringRes
     private static final int[] TAB_TITLES = new int[]{R.string.tab_text_1, R.string.tab_text_2, R.string.tab_text_3};
     private final Context mContext;
-    private FirebaseUser firebaseUser;
+    private String mUserName;
 
-    public SectionsPagerAdapter(Context context, FragmentManager fm, FirebaseUser firebaseUser) {
+    public SectionsPagerAdapter(Context context, FragmentManager fm, String mUserName) {
         super(fm);
         mContext = context;
-        this.firebaseUser = firebaseUser;
+        this.mUserName = mUserName;
+        Log.i("SectionsPagerAdapter: ", mUserName);
     }
 
     @Override
     public Fragment getItem(int position) {
         // getItem is called to instantiate the fragment for the given page.
         // Return a PlaceholderFragment (defined as a static inner class below).
-        Fragment fragment = new Fragment();
+//        Fragment fragment = new Fragment();
         switch (position) {
             case 0:
-                return new ChatFragment(firebaseUser);
+                return new ChatFragment(mUserName);
             case 1:
                 return new FriendsFragment();
             default:
@@ -55,7 +57,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public int getCount() {
-        // Show 2 total pages.
+        //return number of tabs
         return TAB_TITLES.length;
     }
 }
